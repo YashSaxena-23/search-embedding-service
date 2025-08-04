@@ -48,7 +48,7 @@ class EmbeddingService:
 # Initialize service
 embedding_service = EmbeddingService()
 
-@app.route('/health', methods=['GET'])
+@app.route('/embedding-service/api/v1/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
     try:
@@ -67,7 +67,7 @@ def health_check():
             'error': str(e)
         }), 500
 
-@app.route('/embed', methods=['POST'])
+@app.route('/embedding-service/api/v1/embed', methods=['POST'])
 def get_embedding():
     """
     Generate embedding for a query - direct replacement for embeddingService.getEmbedding(query)
