@@ -150,6 +150,60 @@ def get_batch_embeddings():
         return jsonify({'error': 'Failed to generate batch embeddings'}), 500
 
 
+@app.route('/embedding-service/api/v1/embed-batch', methods=['POST'])
+def get_embedding_batch():
+    """
+    Generate embeddings for a batch of ID-query pairs.
+
+    Expected JSON payload:
+    {
+        "queries": {
+            "101": "love and relationship",
+            "102": "career guidance",
+            ...
+        }
+    }
+
+    Returns:
+    {
+        "embeddings": {
+            "101": [...],
+            "102": [...],
+            ...
+        },
+        "dimension": 384
+    }
+    """
+    try:
+        if not request.is_json:
+            return jsonify({'error': 'Request must be JSON'}), 400
+
+        data = request.get_json()
+        id_query_map = data.get("queries")
+
+        if not isinstance(id_query_map, dict) or not id_query_map:
+            return jsonify({'error': 'Invalid or missing "queries" field'}), 400
+
+        embeddings = {}
+        for str_id, query in id_query_map.items():
+            if not isinstance(query, str) or not query.strip():
+                continue  # skip invalid queries
+            try:
+                embedding = embedding_service.get_embedding(query.strip())
+                embeddings[str_id] = embedding
+            except Exception as inner_e:
+                logger.warning(f"Failed to embed ID {str_id}: {inner_e}")
+
+        return jsonify({
+            "embeddings": embeddings,
+            "dimension": len(next(iter(embeddings.values()), []))
+        })
+
+    except Exception as e:
+        logger.error(f"Error generating batch embeddings: {str(e)}")
+        return jsonify({'error': 'Failed to generate embeddings'}), 500
+
+
 if __name__ == '__main__':
     host = os.getenv('HOST', '0.0.0.0')
     port = int(os.getenv('PORT', 5000))
